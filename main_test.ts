@@ -1,7 +1,6 @@
-import { assertEquals,  } from "@std/assert";
-import { readFiles } from "./main.ts";
+import { assertEquals } from "@std/assert";
+import { findAudioFiles } from "./main.ts";
 
-Deno.test(async function readFilesTest() {
-  console.log(await readFiles())
-  assertEquals((await readFiles()).length, 6);
+Deno.test(function findAudioFilesTest() {
+  assertEquals((findAudioFiles()).length, 0);
 });
