@@ -2,14 +2,22 @@
   "version": "4",
   "specifiers": {
     "jsr:@std/assert@1": "1.0.10",
+    "jsr:@std/fs@*": "1.0.10",
     "jsr:@std/internal@^1.0.5": "1.0.5",
-    "jsr:@std/path@*": "1.0.8"
+    "jsr:@std/path@*": "1.0.8",
+    "jsr:@std/path@^1.0.8": "1.0.8"
   },
   "jsr": {
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
       "dependencies": [
         "jsr:@std/internal"
+      ]
+    },
+    "@std/fs@1.0.10": {
+      "integrity": "bf041f9d7a0a460817f0421be8946d0e06011b3433e6c83a215628de5e3c7c2c",
+      "dependencies": [
+        "jsr:@std/path@^1.0.8"
       ]
     },
     "@std/internal@1.0.5": {
