@@ -1,7 +1,10 @@
-import { join, extname } from "@std/path";
+import { extname, join } from "@std/path";
 import { emptyDirSync } from "@std/fs";
+import { type Args, parseArgs } from "@std/cli/parse-args";
 
 // TODO move functions to utils folder
+// TODO explicit return
+// TODO import sort
 
 interface Tags {
   BPM?: string;
@@ -20,7 +23,6 @@ const audioExtensions = new Set([".flac", ".mp3"]);
 const folders = new Map<string, string[]>();
 
 // TODO docs and tests
-// TODO handle unescaped special charters in the path
 function getAudioFileTags(filePath: string): Tags | null {
   const command = new Deno.Command("ffprobe", {
     args: [
@@ -54,21 +56,16 @@ function getAudioFileTags(filePath: string): Tags | null {
 }
 
 // TODO docs and tests
-export function findAudioFiles(
-  path = Deno.cwd(),
-): FileInfo[] {
-  const homePath = Deno.env.get("HOME");
-
-  const root = path.includes(Deno.cwd()) ? "" : String(homePath);
+export function findAudioFiles(path: string): FileInfo[] {
   const files = [];
 
   for (
-    const f of Deno.readDirSync(join(root, path))
+    const f of Deno.readDirSync(path)
   ) {
     const extension = extname(f.name);
 
     if (audioExtensions.has(extension)) {
-      const filePath = join(root, path, f.name);
+      const filePath = join(path, f.name);
       const tags = getAudioFileTags(filePath);
 
       if (tags) {
@@ -109,29 +106,47 @@ function analyseDirectoryStructure(fileInfo: FileInfo[]): void {
 
 // TODO test + docs
 // TODO take output location as an argument
-function makeDirectoryStructure() {
-  for (const [bpm, value] of folders.entries()) {
+function makeDirectoryStructure(): void {
+  for (const [bpm, values] of folders.entries()) {
     Deno.mkdirSync(`./out/${bpm}`);
 
-    for (const folder of value.values()) {
+    for (const folder of values.values()) {
       Deno.mkdirSync(`./out/${bpm}/${folder}`);
     }
   }
 }
 
-// Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
-if (import.meta.main) {
-  // TODO handle folders already existing
-  emptyDirSync("./out");
+function parseArguments(args: string[]): Args {
+  const stringArgs = [
+    "input",
+    "output",
+  ];
 
-  const fileMetaData = findAudioFiles(Deno.args[0]);
-  analyseDirectoryStructure(fileMetaData);
+  // TODO alias
 
-  makeDirectoryStructure()
+  return parseArgs(args, {
+    string: stringArgs,
+  });
+}
 
-  // TODO decide on approach for moving audio file
+function main(inputArgs: string[]): void {
+  if (import.meta.main) {
+    // TODO handle folders already existing
+    emptyDirSync("./out");
 
-  for await (const dirEntry of Deno.readDirSync("./out")) {
-    console.log("Basic listing:", dirEntry.name);
+    const { input } = parseArguments(inputArgs);
+
+    const fileMetaData = findAudioFiles(input);
+    analyseDirectoryStructure(fileMetaData);
+
+    makeDirectoryStructure();
+
+    // TODO decide on approach for moving audio file
+
+    for (const dirEntry of Deno.readDirSync("./out")) {
+      console.log("Basic listing:", dirEntry.name);
+    }
   }
 }
+
+main(Deno.args);
