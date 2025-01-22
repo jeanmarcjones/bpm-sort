@@ -1,5 +1,5 @@
-import * as stdPath from "jsr:@std/path";
-import * as fs from "jsr:@std/fs";
+import { join, extname } from "@std/path";
+import { emptyDirSync } from "@std/fs";
 
 // TODO move functions to utils folder
 
@@ -58,25 +58,24 @@ export function findAudioFiles(
   path = Deno.cwd(),
 ): FileInfo[] {
   const homePath = Deno.env.get("HOME");
-  if (!homePath) return [];
 
-  const root = path.includes(Deno.cwd()) ? "" : homePath;
+  const root = path.includes(Deno.cwd()) ? "" : String(homePath);
   const files = [];
 
   for (
-    const f of Deno.readDirSync(stdPath.join(root, path))
+    const f of Deno.readDirSync(join(root, path))
   ) {
-    const extension = stdPath.extname(f.name);
+    const extension = extname(f.name);
 
     if (audioExtensions.has(extension)) {
-      const filePath = stdPath.join(root, path, f.name);
+      const filePath = join(root, path, f.name);
       const tags = getAudioFileTags(filePath);
 
       if (tags) {
         files.push({ ...f, filePath, tags });
       }
     } else if (f.isDirectory) {
-      const recursivePath = stdPath.join(path, f.name);
+      const recursivePath = join(path, f.name);
 
       files.push(...findAudioFiles(recursivePath));
     }
@@ -123,7 +122,7 @@ function makeDirectoryStructure() {
 // Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
 if (import.meta.main) {
   // TODO handle folders already existing
-  fs.emptyDirSync("./out");
+  emptyDirSync("./out");
 
   const fileMetaData = findAudioFiles(Deno.args[0]);
   analyseDirectoryStructure(fileMetaData);
