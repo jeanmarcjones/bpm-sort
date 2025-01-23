@@ -6,8 +6,8 @@ import {
   makeDirectoryStructure,
 } from "./utils.ts";
 
-// TODO explicit return
-// TODO import sort
+// TODO set explicit return types
+// TODO sort import
 
 const folders = new Map<string, string[]>();
 
@@ -17,32 +17,30 @@ function parseArguments(args: string[]): Args {
     "output",
   ];
 
-  // TODO alias
-
   return parseArgs(args, {
     string: stringArgs,
+    default: { output: "./out" },
   });
 }
 
 async function main(inputArgs: string[]): Promise<void> {
   if (import.meta.main) {
-    // TODO handle folders already existing
-    emptyDirSync("./out");
+    const { input, output } = parseArguments(inputArgs);
 
-    const { input } = parseArguments(inputArgs);
+    // TODO handle folders already existing
+    emptyDirSync(output);
 
     const fileMetaData = findAudioFiles(input);
     analyseDirectoryStructure(folders, fileMetaData);
 
-    makeDirectoryStructure(folders);
+    makeDirectoryStructure(folders, output);
 
     // TODO decide on approach for moving audio file
 
-    for await (const dirEntry of walk("./out")) {
+    for await (const dirEntry of walk(output)) {
       console.log("Recursive walking:", dirEntry.name);
     }
   }
 }
 
 main(Deno.args);
-  

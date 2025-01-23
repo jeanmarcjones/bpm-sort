@@ -102,13 +102,12 @@ function analyseDirectoryStructure(
 }
 
 // TODO test + docs
-// TODO take output location as an argument
-function makeDirectoryStructure(folders: Folders): void {
+function makeDirectoryStructure(folders: Folders, output: string): void {
   for (const [bpm, values] of folders.entries()) {
-    Deno.mkdirSync(`./out/${bpm}`);
+    Deno.mkdirSync(`${output}/${bpm}`, { recursive: true });
 
     for (const folder of values.values()) {
-      Deno.mkdirSync(`./out/${bpm}/${folder}`);
+      Deno.mkdirSync(`${output}/${bpm}/${folder}`);
     }
   }
 }
