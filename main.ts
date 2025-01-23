@@ -17,7 +17,13 @@ function parseArguments(args: string[]): Args {
     "output",
   ];
 
+  const alias = {
+    "input": "i",
+    "output": "o",
+  };
+
   return parseArgs(args, {
+    alias,
     string: stringArgs,
     default: { output: "./out" },
   });
