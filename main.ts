@@ -6,8 +6,7 @@ import {
   makeDirectoryStructure,
 } from "./utils.ts";
 
-// TODO set explicit return types
-// TODO sort import
+// TODO add --help argument
 
 const folders = new Map<string, string[]>();
 

@@ -1,6 +1,6 @@
-import { assertEquals,  } from "@std/assert";
-import { findAudioFiles } from "./main.ts";
+import { assertEquals } from "@std/assert";
+import { findAudioFiles } from "./utils.ts";
 
-Deno.test(function findAudioFilesTest() {
-  assertEquals((findAudioFiles()).length, 0);
+Deno.test("No audio files", function findAudioFilesTest(): void {
+  assertEquals((findAudioFiles("./")).length, 0);
 });
