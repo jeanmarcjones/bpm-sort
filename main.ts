@@ -1,5 +1,6 @@
 import { emptyDirSync, walk } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
+import { brightCyan, brightYellow } from "@std/fmt/colors";
 import {
   analyseDirectoryStructure,
   findAudioFiles,
@@ -36,11 +37,32 @@ async function main(inputArgs: string[]): Promise<void> {
     emptyDirSync(output);
 
     const fileMetaData = findAudioFiles(input);
-    analyseDirectoryStructure(folders, fileMetaData);
+    const { missingBPM, missingArtist } = analyseDirectoryStructure(
+      folders,
+      fileMetaData,
+    );
 
     makeDirectoryStructure(folders, output);
 
     // TODO decide on approach for moving audio file
+
+    console.log();
+
+    if (missingBPM.length > 0) {
+      console.log(brightYellow("Files missing a BPM tag:"));
+      for (const path of missingBPM) {
+        console.log(path);
+      }
+      console.log();
+    }
+
+    if (missingArtist.length > 0) {
+      console.log(brightCyan("Files missing a Artist tag:"));
+      for (const path of missingArtist) {
+        console.log(path);
+      }
+      console.log();
+    }
 
     for await (const dirEntry of walk(output)) {
       console.log("Recursive walking:", dirEntry.name);

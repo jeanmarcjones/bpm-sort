@@ -79,12 +79,16 @@ function findAudioFiles(path: string): FileInfo[] {
 function analyseDirectoryStructure(
   folders: Folders,
   fileInfo: FileInfo[],
-): void {
+): { missingBPM: string[]; missingArtist: string[] } {
+  const missingBPM: string[] = [];
+  const missingArtist: string[] = [];
+
   fileInfo.forEach((i) => {
     const bpmValue = i?.tags?.BPM || i?.tags?.TBPM;
     const artistValue = i.tags.ARTIST || i.tags.artist;
 
-    // TODO log files that are missing a bpm or artist
+    if (!bpmValue) missingBPM.push(i.filePath);
+    if (!artistValue) missingArtist.push(i.filePath);
 
     if (bpmValue && artistValue) {
       const parsedArtist = artistValue.toLowerCase().replace(
@@ -99,6 +103,8 @@ function analyseDirectoryStructure(
       folders.set(bpmValue, nextValue);
     }
   });
+
+  return { missingBPM, missingArtist };
 }
 
 // TODO test + docs
