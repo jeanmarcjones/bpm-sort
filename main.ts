@@ -9,8 +9,6 @@ import {
 
 // TODO add --help argument
 
-const folders = new Map<string, string[]>();
-
 function parseArguments(args: string[]): Args {
   const stringArgs = [
     "input",
@@ -37,8 +35,7 @@ async function main(inputArgs: string[]): Promise<void> {
     emptyDirSync(output);
 
     const fileMetaData = findAudioFiles(input);
-    const { missingBPM, missingArtist } = analyseDirectoryStructure(
-      folders,
+    const { folders, missingBPM, missingArtist } = analyseDirectoryStructure(
       fileMetaData,
     );
 

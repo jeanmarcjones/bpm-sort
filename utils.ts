@@ -77,9 +77,9 @@ function findAudioFiles(path: string): FileInfo[] {
 
 // TODO docs and tests
 function analyseDirectoryStructure(
-  folders: Folders,
   fileInfo: FileInfo[],
-): { missingBPM: string[]; missingArtist: string[] } {
+): { folders: Folders; missingBPM: string[]; missingArtist: string[] } {
+  const folders: Folders = new Map();
   const missingBPM: string[] = [];
   const missingArtist: string[] = [];
 
@@ -104,7 +104,7 @@ function analyseDirectoryStructure(
     }
   });
 
-  return { missingBPM, missingArtist };
+  return { folders, missingBPM, missingArtist };
 }
 
 // TODO test + docs
