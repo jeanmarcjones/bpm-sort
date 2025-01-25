@@ -10,6 +10,7 @@ import {
 // TODO add --help argument
 
 function parseArguments(args: string[]): Args {
+  // TODO re-name?
   const stringArgs = [
     "input",
     "output",
@@ -60,6 +61,8 @@ async function main(inputArgs: string[]): Promise<void> {
       }
       console.log();
     }
+
+    // TODO log stats on folders created and files moved
 
     for await (const dirEntry of walk(output)) {
       console.log("Recursive walking:", dirEntry.name);

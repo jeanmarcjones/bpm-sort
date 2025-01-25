@@ -1,18 +1,8 @@
 import { extname, join } from "@std/path";
+import { FileInfo } from "./schemas/file_info.ts";
+import { Tags, TagsSchema } from "./schemas/tags.ts";
 
 type Folders = Map<string, string[]>;
-
-interface Tags {
-  BPM?: string;
-  TBPM?: string;
-  ARTIST?: string;
-  artist?: string;
-}
-
-interface FileInfo extends Deno.DirEntry {
-  filePath: string;
-  tags: Tags;
-}
 
 const AUDIO_EXTENSIONS = new Set([".flac", ".mp3"]);
 
@@ -28,25 +18,15 @@ function getAudioFileTags(filePath: string): Tags | null {
   });
   const { stdout, success } = command.outputSync();
 
-  if (success) {
-    // TODO Validate metadata with ZOD
-    const metaData = JSON.parse(new TextDecoder().decode(stdout));
-    const filteredTags = { ...metaData?.format?.tags };
+  if (!success) return null;
 
-    // FLAC traktor tags
-    delete filteredTags.TRAKTOR4;
+  const metaData = JSON.parse(new TextDecoder().decode(stdout));
 
-    // MP3 traktor tags
-    Object.keys(filteredTags).forEach((key) => {
-      if (key.includes("id3v2_priv.")) {
-        delete filteredTags[key];
-      }
-    });
+  const parsedData = TagsSchema.safeParse(metaData?.format?.tags);
 
-    return filteredTags;
-  } else {
-    return null;
-  }
+  if (!parsedData.success) return null;
+
+  return parsedData.data;
 }
 
 // TODO docs and tests
@@ -84,23 +64,17 @@ function analyseDirectoryStructure(
   const missingArtist: string[] = [];
 
   fileInfo.forEach((i) => {
-    const bpmValue = i?.tags?.BPM || i?.tags?.TBPM;
-    const artistValue = i.tags.ARTIST || i.tags.artist;
+    const { BPM, artist } = i.tags;
 
-    if (!bpmValue) missingBPM.push(i.filePath);
-    if (!artistValue) missingArtist.push(i.filePath);
+    if (!BPM) missingBPM.push(i.filePath);
+    if (!artist) missingArtist.push(i.filePath);
 
-    if (bpmValue && artistValue) {
-      const parsedArtist = artistValue.toLowerCase().replace(
-        /[^a-zA-Z\s]/g,
-        "",
-      );
+    if (BPM && artist) {
+      const nextValue = folders.has(BPM)
+        ? [...(folders.get(BPM) ?? []), artist]
+        : [artist];
 
-      const nextValue = folders.has(bpmValue)
-        ? [...(folders.get(bpmValue) ?? []), parsedArtist]
-        : [parsedArtist];
-
-      folders.set(bpmValue, nextValue);
+      folders.set(BPM, nextValue);
     }
   });
 
