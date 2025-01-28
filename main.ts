@@ -1,6 +1,6 @@
 import { emptyDirSync } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
-import { brightCyan, brightGreen, brightYellow } from "@std/fmt/colors";
+import { brightCyan, brightYellow, green } from "@std/fmt/colors";
 import {
   analyseDirectoryStructure,
   copyAudioFiles,
@@ -64,9 +64,11 @@ function main(inputArgs: string[]): void {
       console.log();
     }
 
-    // TODO log stats on folders and files
-
-    console.log(brightGreen("Complete"));
+    // TODO log stats on created folders?
+    const copiedFiles = metadata.filter((m) =>
+      !m.tags.BPM || !m.tags.artist
+    ).length;
+    console.log(green(`Complete copied ${copiedFiles} files.`));
   }
 }
 
