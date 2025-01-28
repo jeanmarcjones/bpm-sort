@@ -1,4 +1,4 @@
-import { extname, join } from "@std/path";
+import { basename, extname, join } from "@std/path";
 import { FileInfo } from "./schemas/file_info.ts";
 import { Tags, TagsSchema } from "./schemas/tags.ts";
 
@@ -31,7 +31,7 @@ function getAudioFileTags(filePath: string): Tags | null {
 
 // TODO docs and tests
 function findAudioFiles(path: string): FileInfo[] {
-  const files: FileInfo[] = [];
+  const audioFiles: FileInfo[] = [];
 
   for (
     const f of Deno.readDirSync(path)
@@ -43,16 +43,16 @@ function findAudioFiles(path: string): FileInfo[] {
       const tags = getAudioFileTags(filePath);
 
       if (tags) {
-        files.push({ ...f, filePath, tags });
+        audioFiles.push({ ...f, filePath, tags });
       }
     } else if (f.isDirectory) {
       const recursivePath = join(path, f.name);
 
-      files.push(...findAudioFiles(recursivePath));
+      audioFiles.push(...findAudioFiles(recursivePath));
     }
   }
 
-  return files;
+  return audioFiles;
 }
 
 // TODO docs and tests
@@ -82,14 +82,35 @@ function analyseDirectoryStructure(
 }
 
 // TODO test + docs
-function makeDirectoryStructure(folders: Folders, output: string): void {
+function makeDirectoryStructure(folders: Folders, outPath: string): void {
   for (const [bpm, values] of folders.entries()) {
-    Deno.mkdirSync(`${output}/${bpm}`, { recursive: true });
+    Deno.mkdirSync(`${outPath}/${bpm}`, { recursive: true });
 
     for (const folder of values.values()) {
-      Deno.mkdirSync(`${output}/${bpm}/${folder}`);
+      Deno.mkdirSync(`${outPath}/${bpm}/${folder}`);
     }
   }
 }
 
-export { analyseDirectoryStructure, findAudioFiles, makeDirectoryStructure };
+function copyAudioFiles(
+  metaData: FileInfo[],
+  outPath: string,
+): void {
+  for (const meta of metaData) {
+    if (!meta.tags.BPM || !meta.tags.artist) continue;
+
+    const filename = basename(meta.filePath);
+
+    Deno.copyFileSync(
+      meta.filePath,
+      `${outPath}/${meta.tags.BPM}/${meta.tags.artist}/${filename}`,
+    );
+  }
+}
+
+export {
+  analyseDirectoryStructure,
+  copyAudioFiles,
+  findAudioFiles,
+  makeDirectoryStructure,
+};

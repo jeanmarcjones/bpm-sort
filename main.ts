@@ -1,8 +1,9 @@
-import { emptyDirSync, walk } from "@std/fs";
+import { emptyDirSync } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
-import { brightCyan, brightYellow } from "@std/fmt/colors";
+import { brightCyan, brightGreen, brightYellow } from "@std/fmt/colors";
 import {
   analyseDirectoryStructure,
+  copyAudioFiles,
   findAudioFiles,
   makeDirectoryStructure,
 } from "./utils.ts";
@@ -28,7 +29,7 @@ function parseArguments(args: string[]): Args {
   });
 }
 
-async function main(inputArgs: string[]): Promise<void> {
+function main(inputArgs: string[]): void {
   if (import.meta.main) {
     const { input, output } = parseArguments(inputArgs);
 
@@ -41,8 +42,7 @@ async function main(inputArgs: string[]): Promise<void> {
     );
 
     makeDirectoryStructure(folders, output);
-
-    // TODO decide on approach for moving audio file
+    copyAudioFiles(fileMetaData, output);
 
     console.log();
 
@@ -62,11 +62,9 @@ async function main(inputArgs: string[]): Promise<void> {
       console.log();
     }
 
-    // TODO log stats on folders created and files moved
+    // TODO log stats on folders and files
 
-    for await (const dirEntry of walk(output)) {
-      console.log("Recursive walking:", dirEntry.name);
-    }
+    console.log(brightGreen("Complete"));
   }
 }
 
