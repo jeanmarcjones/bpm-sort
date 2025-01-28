@@ -11,38 +11,40 @@ import {
 // TODO add --help argument
 
 function parseArguments(args: string[]): Args {
-  // TODO re-name?
   const stringArgs = [
-    "input",
-    "output",
+    "from",
+    "to",
   ];
 
   const alias = {
-    "input": "i",
-    "output": "o",
+    "from": "f",
+    "to": "t",
   };
 
   return parseArgs(args, {
     alias,
     string: stringArgs,
-    default: { output: "./out" },
+    // TODO decide on default location
+    default: { to: "./out" },
   });
 }
 
 function main(inputArgs: string[]): void {
   if (import.meta.main) {
-    const { input, output } = parseArguments(inputArgs);
+    const { from, to } = parseArguments(inputArgs);
 
     // TODO handle folders already existing
-    emptyDirSync(output);
+    emptyDirSync(to);
 
-    const fileMetaData = findAudioFiles(input);
-    const { folders, missingBPM, missingArtist } = analyseDirectoryStructure(
-      fileMetaData,
-    );
+    const metadata = findAudioFiles(from);
+    const {
+      folders,
+      missingBPM,
+      missingArtist,
+    } = analyseDirectoryStructure(metadata);
 
-    makeDirectoryStructure(folders, output);
-    copyAudioFiles(fileMetaData, output);
+    makeDirectoryStructure(folders, to);
+    copyAudioFiles(metadata, to);
 
     console.log();
 

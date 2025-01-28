@@ -1,5 +1,5 @@
 import { basename, extname, join } from "@std/path";
-import { FileInfo } from "./schemas/file_info.ts";
+import { Metadata } from "./schemas/metadata.ts";
 import { Tags, TagsSchema } from "./schemas/tags.ts";
 
 type Folders = Map<string, string[]>;
@@ -7,13 +7,13 @@ type Folders = Map<string, string[]>;
 const AUDIO_EXTENSIONS = new Set([".flac", ".mp3"]);
 
 // TODO docs and tests
-function getAudioFileTags(filePath: string): Tags | null {
+function getAudioFileTags(fromPath: string): Tags | null {
   const command = new Deno.Command("ffprobe", {
     args: [
       "-show_format",
       "-print_format",
       "json",
-      filePath,
+      fromPath,
     ],
   });
   const { stdout, success } = command.outputSync();
@@ -21,7 +21,6 @@ function getAudioFileTags(filePath: string): Tags | null {
   if (!success) return null;
 
   const metaData = JSON.parse(new TextDecoder().decode(stdout));
-
   const parsedData = TagsSchema.safeParse(metaData?.format?.tags);
 
   if (!parsedData.success) return null;
@@ -30,23 +29,23 @@ function getAudioFileTags(filePath: string): Tags | null {
 }
 
 // TODO docs and tests
-function findAudioFiles(path: string): FileInfo[] {
-  const audioFiles: FileInfo[] = [];
+function findAudioFiles(fromPath: string): Metadata[] {
+  const audioFiles: Metadata[] = [];
 
   for (
-    const f of Deno.readDirSync(path)
+    const f of Deno.readDirSync(fromPath)
   ) {
     const extension = extname(f.name);
 
     if (AUDIO_EXTENSIONS.has(extension)) {
-      const filePath = join(path, f.name);
-      const tags = getAudioFileTags(filePath);
+      const path = join(fromPath, f.name);
+      const tags = getAudioFileTags(path);
 
       if (tags) {
-        audioFiles.push({ ...f, filePath, tags });
+        audioFiles.push({ ...f, path, tags });
       }
     } else if (f.isDirectory) {
-      const recursivePath = join(path, f.name);
+      const recursivePath = join(fromPath, f.name);
 
       audioFiles.push(...findAudioFiles(recursivePath));
     }
@@ -57,17 +56,17 @@ function findAudioFiles(path: string): FileInfo[] {
 
 // TODO docs and tests
 function analyseDirectoryStructure(
-  fileInfo: FileInfo[],
+  metadata: Metadata[],
 ): { folders: Folders; missingBPM: string[]; missingArtist: string[] } {
   const folders: Folders = new Map();
   const missingBPM: string[] = [];
   const missingArtist: string[] = [];
 
-  fileInfo.forEach((i) => {
-    const { BPM, artist } = i.tags;
+  for (const m of metadata) {
+    const { BPM, artist } = m.tags;
 
-    if (!BPM) missingBPM.push(i.filePath);
-    if (!artist) missingArtist.push(i.filePath);
+    if (!BPM) missingBPM.push(m.path);
+    if (!artist) missingArtist.push(m.path);
 
     if (BPM && artist) {
       const nextValue = folders.has(BPM)
@@ -76,34 +75,34 @@ function analyseDirectoryStructure(
 
       folders.set(BPM, nextValue);
     }
-  });
+  }
 
   return { folders, missingBPM, missingArtist };
 }
 
 // TODO test + docs
-function makeDirectoryStructure(folders: Folders, outPath: string): void {
+function makeDirectoryStructure(folders: Folders, toPath: string): void {
   for (const [bpm, values] of folders.entries()) {
-    Deno.mkdirSync(`${outPath}/${bpm}`, { recursive: true });
+    Deno.mkdirSync(`${toPath}/${bpm}`, { recursive: true });
 
     for (const folder of values.values()) {
-      Deno.mkdirSync(`${outPath}/${bpm}/${folder}`);
+      Deno.mkdirSync(`${toPath}/${bpm}/${folder}`);
     }
   }
 }
 
 function copyAudioFiles(
-  metaData: FileInfo[],
-  outPath: string,
+  metadata: Metadata[],
+  toPath: string,
 ): void {
-  for (const meta of metaData) {
-    if (!meta.tags.BPM || !meta.tags.artist) continue;
+  for (const m of metadata) {
+    if (!m.tags.BPM || !m.tags.artist) continue;
 
-    const filename = basename(meta.filePath);
+    const filename = basename(m.path);
 
     Deno.copyFileSync(
-      meta.filePath,
-      `${outPath}/${meta.tags.BPM}/${meta.tags.artist}/${filename}`,
+      m.path,
+      `${toPath}/${m.tags.BPM}/${m.tags.artist}/${filename}`,
     );
   }
 }
