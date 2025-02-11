@@ -1,13 +1,17 @@
 import { emptyDirSync } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
-import { brightCyan, brightYellow } from "@std/fmt/colors";
 import {
   analyseDirectoryStructure,
   copyAudioFiles,
   findAudioFiles,
   makeDirectoryStructure,
 } from "./utils/misc.ts";
-import { printComplete, printDryRun } from "./utils/logging.ts";
+import {
+  printComplete,
+  printDryRun,
+  printMissingArtist,
+  printMissingBPM,
+} from "./utils/logging.ts";
 
 // TODO add --help argument
 // TODO allow multiple from folders
@@ -63,21 +67,9 @@ function main(inputArgs: string[]): void {
 
     console.log();
 
-    if (missingBPM.length > 0) {
-      console.log(brightYellow("Files missing a BPM tag:"));
-      for (const path of missingBPM) {
-        console.log(path);
-      }
-      console.log();
-    }
+    printMissingBPM(missingBPM);
 
-    if (missingArtist.length > 0) {
-      console.log(brightCyan("Files missing a Artist tag:"));
-      for (const path of missingArtist) {
-        console.log(path);
-      }
-      console.log();
-    }
+    printMissingArtist(missingArtist);
 
     const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
     const totalCopiedFiles = copiedFiles.length;

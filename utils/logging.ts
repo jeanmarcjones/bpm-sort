@@ -1,6 +1,8 @@
-import { green, magenta } from "@std/fmt/colors";
+import { brightCyan, brightYellow, green, magenta } from "@std/fmt/colors";
 import { type Metadata } from "../schemas/metadata.ts";
 import { basename } from "@std/path/basename";
+
+// TODO snapshot tests?
 
 function printComplete(totalCopiedFiles: number, foldersCreated: number): void {
   console.log(green(`Complete...`));
@@ -22,4 +24,24 @@ function printDryRun(copiedFiles: Metadata[], toPath: string): void {
   }
 }
 
-export { printComplete, printDryRun };
+function printMissingBPM(missingBPM: string[]): void {
+  if (missingBPM.length > 0) {
+    console.log(brightYellow("Files missing a BPM tag:"));
+    for (const path of missingBPM) {
+      console.log(path);
+    }
+    console.log();
+  }
+}
+
+function printMissingArtist(missingArtist: string[]): void {
+  if (missingArtist.length > 0) {
+    console.log(brightCyan("Files missing a Artist tag:"));
+    for (const path of missingArtist) {
+      console.log(path);
+    }
+    console.log();
+  }
+}
+
+export { printComplete, printDryRun, printMissingArtist, printMissingBPM };
