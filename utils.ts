@@ -81,14 +81,26 @@ function analyseDirectoryStructure(
 }
 
 // TODO test + docs
-function makeDirectoryStructure(folders: Folders, toPath: string): void {
+function makeDirectoryStructure(
+  folders: Folders,
+  toPath: string,
+): { foldersCreated: number } {
+  let foldersCreated = 0;
+
+  function mkDir(path: string, options: Deno.MkdirOptions = {}): void {
+    foldersCreated += 1;
+    Deno.mkdirSync(path, options);
+  }
+
   for (const [bpm, values] of folders.entries()) {
-    Deno.mkdirSync(`${toPath}/${bpm}`, { recursive: true });
+    mkDir(`${toPath}/${bpm}`, { recursive: true });
 
     for (const folder of values.values()) {
-      Deno.mkdirSync(`${toPath}/${bpm}/${folder}`);
+      mkDir(`${toPath}/${bpm}/${folder}`);
     }
   }
+
+  return { foldersCreated };
 }
 
 function copyAudioFiles(

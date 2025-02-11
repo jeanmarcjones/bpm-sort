@@ -9,6 +9,10 @@ import {
 } from "./utils.ts";
 
 // TODO add --help argument
+// TODO allow multiple from folders
+// TODO put mp3 in own directory
+// TODO dry run option
+// TODO collect files missing bmp or artists tag into separate folder
 
 function parseArguments(args: string[]): Args {
   const stringArgs = [
@@ -43,7 +47,7 @@ function main(inputArgs: string[]): void {
       missingArtist,
     } = analyseDirectoryStructure(metadata);
 
-    makeDirectoryStructure(folders, to);
+    const { foldersCreated } = makeDirectoryStructure(folders, to);
     copyAudioFiles(metadata, to);
 
     console.log();
@@ -64,11 +68,16 @@ function main(inputArgs: string[]): void {
       console.log();
     }
 
-    // TODO log stats on created folders?
     const copiedFiles = metadata.filter((m) =>
       !m.tags.BPM || !m.tags.artist
     ).length;
-    console.log(green(`Complete copied ${copiedFiles} files.`));
+
+    console.log(green(`Complete...`));
+    console.log(
+      `Copied ${green(`${copiedFiles}`)} files and created ${
+        green(`${foldersCreated}`)
+      } folders.`,
+    );
   }
 }
 
