@@ -1,32 +1,39 @@
 import { emptyDirSync } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
-import { brightCyan, brightYellow, green } from "@std/fmt/colors";
+import { brightCyan, brightYellow } from "@std/fmt/colors";
 import {
   analyseDirectoryStructure,
   copyAudioFiles,
   findAudioFiles,
   makeDirectoryStructure,
-} from "./utils.ts";
+} from "./utils/misc.ts";
+import { printComplete, printDryRun } from "./utils/logging.ts";
 
 // TODO add --help argument
 // TODO allow multiple from folders
 // TODO put mp3 in own directory
-// TODO dry run option
 // TODO collect files missing bmp or artists tag into separate folder
+// TODO handle colab tracks
 
 function parseArguments(args: string[]): Args {
+  const booleanArgs = [
+    "dry-run",
+  ];
+
   const stringArgs = [
     "from",
     "to",
   ];
 
   const alias = {
-    "from": "f",
-    "to": "t",
+    from: "f",
+    to: "t",
+    "dry-run": "d",
   };
 
   return parseArgs(args, {
     alias,
+    boolean: booleanArgs,
     string: stringArgs,
     // TODO decide on default location
     default: { to: "./out" },
@@ -35,7 +42,7 @@ function parseArguments(args: string[]): Args {
 
 function main(inputArgs: string[]): void {
   if (import.meta.main) {
-    const { from, to } = parseArguments(inputArgs);
+    const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
     // TODO handle folders already existing
     emptyDirSync(to);
@@ -47,8 +54,12 @@ function main(inputArgs: string[]): void {
       missingArtist,
     } = analyseDirectoryStructure(metadata);
 
-    const { foldersCreated } = makeDirectoryStructure(folders, to);
-    copyAudioFiles(metadata, to);
+    let foldersCreated = 0;
+
+    if (!dryRun) {
+      foldersCreated = makeDirectoryStructure(folders, to);
+      copyAudioFiles(metadata, to);
+    }
 
     console.log();
 
@@ -68,16 +79,12 @@ function main(inputArgs: string[]): void {
       console.log();
     }
 
-    const copiedFiles = metadata.filter((m) =>
-      !m.tags.BPM || !m.tags.artist
-    ).length;
+    const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
+    const totalCopiedFiles = copiedFiles.length;
 
-    console.log(green(`Complete...`));
-    console.log(
-      `Copied ${green(`${copiedFiles}`)} files and created ${
-        green(`${foldersCreated}`)
-      } folders.`,
-    );
+    dryRun
+      ? printDryRun(copiedFiles, to)
+      : printComplete(totalCopiedFiles, foldersCreated);
   }
 }
 

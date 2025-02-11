@@ -1,6 +1,6 @@
 import { basename, extname, join } from "@std/path";
-import { Metadata } from "./schemas/metadata.ts";
-import { Tags, TagsSchema } from "./schemas/tags.ts";
+import { Metadata } from "../schemas/metadata.ts";
+import { Tags, TagsSchema } from "../schemas/tags.ts";
 
 type Folders = Map<string, string[]>;
 
@@ -84,7 +84,7 @@ function analyseDirectoryStructure(
 function makeDirectoryStructure(
   folders: Folders,
   toPath: string,
-): { foldersCreated: number } {
+): number {
   let foldersCreated = 0;
 
   function mkDir(path: string, options: Deno.MkdirOptions = {}): void {
@@ -100,7 +100,7 @@ function makeDirectoryStructure(
     }
   }
 
-  return { foldersCreated };
+  return foldersCreated;
 }
 
 function copyAudioFiles(
