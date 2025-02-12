@@ -4,21 +4,31 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo "${GREEN}Running fmt...${NC}"
+echo "${GREEN}Formatting...${NC}"
 
 if ! deno fmt --check ; then
   echo "${RED}Fmt errors found. Exiting...${NC}"
   exit 1
 fi
 
-echo "${GREEN}Running lint...${NC}"
+echo "${GREEN}Linting...${NC}"
 
-deno lint --compact
+deno lint --compact .
 LINT_EXIT_CODE=$?
 
 if [ $LINT_EXIT_CODE -ne 0 ] ; then
   echo "${RED}Linting errors found. Exiting...${NC}"
   exit $LINT_EXIT_CODE
+fi
+
+echo "${GREEN}Checking types...${NC}"
+
+deno check .
+CHECK_EXIT_CODE=$?
+
+if [ $CHECK_EXIT_CODE -ne 0 ] ; then
+  echo "${RED}Type errors found. Exiting...${NC}"
+  exit $CHECK_EXIT_CODE
 fi
 
 echo "${GREEN}Running tests...${NC}"
