@@ -70,7 +70,14 @@ function findMissingTags(
   return { missingBPM, missingArtist };
 }
 
-// TODO docs + tests
+// TODO tests
+/**
+ * @description Creates a structured file path based on metadata information.
+ *
+ * @param {string} toDir - The base directory where files will be stored
+ * @param {Metadata} metadata - Object containing file metadata including path and tags
+ * @returns {string} A formatted path combining directory, BPM, artist, and filename
+ */
 function createToPath(toDir: string, metadata: Metadata): string {
   const mp3Dir = extname(metadata.path).toLowerCase() === ".mp3" ? "/mp3" : "";
   const filename = basename(metadata.path);
@@ -94,7 +101,13 @@ function copyAudioFiles(
   }
 }
 
-// TODO docs + tests
+// TODO tests
+/**
+ * @description Counts the total number of directories in a specified path recursively.
+ *
+ * @param {string} toPath - The path to start counting directories from
+ * @returns {number} The total number of directories found
+ */
 function countDirectories(toPath: string): number {
   let dirCount = 0;
 
