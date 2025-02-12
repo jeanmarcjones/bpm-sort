@@ -1,10 +1,10 @@
 import { emptyDirSync } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
 import {
-  analyseDirectoryStructure,
   copyAudioFiles,
+  countDirectories,
   findAudioFiles,
-  makeDirectoryStructure,
+  findMissingTags,
 } from "./utils/misc.ts";
 import {
   printComplete,
@@ -15,9 +15,9 @@ import {
 
 // TODO add --help argument
 // TODO allow multiple from folders
-// TODO put mp3 in own directory
 // TODO collect files missing bmp or artists tag into separate folder
 // TODO handle colab tracks
+// TODO toggle mp3 behavior
 
 function parseArguments(args: string[]): Args {
   const booleanArgs = [
@@ -48,22 +48,22 @@ function main(inputArgs: string[]): void {
   if (import.meta.main) {
     const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
+    // TODO check to and from are a dir
+
     // TODO handle folders already existing
     emptyDirSync(to);
 
     const metadata = findAudioFiles(from);
-    const {
-      folders,
-      missingBPM,
-      missingArtist,
-    } = analyseDirectoryStructure(metadata);
+    const { missingBPM, missingArtist } = findMissingTags(metadata);
 
     let foldersCreated = 0;
 
     if (!dryRun) {
-      foldersCreated = makeDirectoryStructure(folders, to);
       copyAudioFiles(metadata, to);
+      foldersCreated = countDirectories(to);
     }
+
+    // TODO handle all files have missing BPM or arist tags
 
     console.log();
 

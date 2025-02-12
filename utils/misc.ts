@@ -1,8 +1,7 @@
-import { basename, extname, join } from "@std/path";
+import { basename, dirname, extname, join } from "@std/path";
 import { Metadata } from "../schemas/metadata.ts";
 import { Tags, TagsSchema } from "../schemas/tags.ts";
-
-type Folders = Map<string, string[]>;
+import { ensureDirSync, walkSync } from "@std/fs";
 
 const AUDIO_EXTENSIONS = new Set([".flac", ".mp3"]);
 
@@ -55,10 +54,9 @@ function findAudioFiles(fromPath: string): Metadata[] {
 }
 
 // TODO docs and tests
-function analyseDirectoryStructure(
+function findMissingTags(
   metadata: Metadata[],
-): { folders: Folders; missingBPM: string[]; missingArtist: string[] } {
-  const folders: Folders = new Map();
+): { missingBPM: string[]; missingArtist: string[] } {
   const missingBPM: string[] = [];
   const missingArtist: string[] = [];
 
@@ -67,61 +65,52 @@ function analyseDirectoryStructure(
 
     if (!BPM) missingBPM.push(m.path);
     if (!artist) missingArtist.push(m.path);
-
-    if (BPM && artist) {
-      const nextValue = folders.has(BPM)
-        ? [...(folders.get(BPM) ?? []), artist]
-        : [artist];
-
-      folders.set(BPM, nextValue);
-    }
   }
 
-  return { folders, missingBPM, missingArtist };
+  return { missingBPM, missingArtist };
 }
 
-// TODO test + docs
-function makeDirectoryStructure(
-  folders: Folders,
-  toPath: string,
-): number {
-  let foldersCreated = 0;
-
-  function mkDir(path: string, options: Deno.MkdirOptions = {}): void {
-    foldersCreated += 1;
-    Deno.mkdirSync(path, options);
-  }
-
-  for (const [bpm, values] of folders.entries()) {
-    mkDir(`${toPath}/${bpm}`, { recursive: true });
-
-    for (const folder of values.values()) {
-      mkDir(`${toPath}/${bpm}/${folder}`);
-    }
-  }
-
-  return foldersCreated;
+// TODO docs + tests
+function createToPath(toDir: string, metadata: Metadata): string {
+  const mp3Dir = extname(metadata.path).toLowerCase() === ".mp3" ? "/mp3" : "";
+  const filename = basename(metadata.path);
+  return `${toDir}/${metadata.tags.BPM}/${metadata.tags.artist}${mp3Dir}/${filename}`;
 }
 
+// TODO docs + tests
 function copyAudioFiles(
   metadata: Metadata[],
-  toPath: string,
+  toDir: string,
 ): void {
   for (const m of metadata) {
     if (!m.tags.BPM || !m.tags.artist) continue;
 
-    const filename = basename(m.path);
+    const toPath = createToPath(toDir, m);
 
-    Deno.copyFileSync(
-      m.path,
-      `${toPath}/${m.tags.BPM}/${m.tags.artist}/${filename}`,
-    );
+    const dir = dirname(toPath);
+    ensureDirSync(dir);
+
+    Deno.copyFileSync(m.path, toPath);
   }
 }
 
+// TODO docs + tests
+function countDirectories(toPath: string): number {
+  let dirCount = 0;
+
+  for (const entry of walkSync(toPath)) {
+    if (entry.isDirectory) {
+      dirCount += 1;
+    }
+  }
+
+  return dirCount;
+}
+
 export {
-  analyseDirectoryStructure,
   copyAudioFiles,
+  countDirectories,
+  createToPath,
   findAudioFiles,
-  makeDirectoryStructure,
+  findMissingTags,
 };
