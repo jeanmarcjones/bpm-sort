@@ -23,7 +23,7 @@ const TagsSchema = z.object({
   artist: z.string().optional(),
 }).transform((t) => ({
   BPM: t.BPM ?? t.TBPM,
-  artist: formatArtist(t.ARTIST ?? t.ARTIST),
+  artist: formatArtist(t.ARTIST ?? t.artist),
 }));
 
 export { type Tags, TagsSchema };
