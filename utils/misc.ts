@@ -109,12 +109,11 @@ function copyAudioFiles(
  * @returns {number} The total number of directories found
  */
 function countDirectories(toPath: string): number {
-  let dirCount = 0;
+  // walk includes the paths root directory
+  let dirCount = -1;
 
-  for (const entry of walkSync(toPath)) {
-    if (entry.isDirectory) {
-      dirCount += 1;
-    }
+  for (const _entry of walkSync(toPath, { includeFiles: false })) {
+    dirCount += 1;
   }
 
   return dirCount;
