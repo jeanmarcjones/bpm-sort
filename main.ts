@@ -12,6 +12,7 @@ import {
   printMissingArtist,
   printMissingBPM,
 } from "./utils/logging.ts";
+import { validateToAndFromDirectories } from "./utils/errors.ts";
 
 // TODO add --help argument
 // TODO allow multiple from folders
@@ -48,7 +49,7 @@ function main(inputArgs: string[]): void {
   if (import.meta.main) {
     const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
-    // TODO check to and from are a dir
+    validateToAndFromDirectories(from, to);
 
     // TODO handle folders already existing
     emptyDirSync(to);
