@@ -16,9 +16,9 @@ import { validateToAndFromDirectories } from "./utils/errors.ts";
 
 // TODO add --help argument
 // TODO allow multiple from folders
-// TODO collect files missing bmp or artists tag into separate folder
 // TODO handle colab tracks
 // TODO toggle mp3 behavior
+// TODO toggle collect missing behavior
 
 function parseArguments(args: string[]): Args {
   const booleanArgs = [

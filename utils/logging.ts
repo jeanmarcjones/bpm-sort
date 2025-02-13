@@ -1,4 +1,4 @@
-import { brightCyan, brightYellow, green, magenta } from "@std/fmt/colors";
+import { brightCyan, brightYellow, green, magenta, red } from "@std/fmt/colors";
 import { type Metadata } from "../schemas/metadata.ts";
 import { createToPath } from "./misc.ts";
 
@@ -19,7 +19,13 @@ function printDryRun(metadata: Metadata[], toPath: string): void {
 
   // TODO ask if full list should be printed?
   for (const m of metadata) {
-    console.log(createToPath(toPath, m));
+    const { path, name, tags: { BPM, artist } } = m;
+
+    if (BPM && artist) {
+      console.log(createToPath(toPath, BPM, artist, path, name));
+    } else {
+      console.log(red(`Error: Missing tags for ${name}`));
+    }
   }
 }
 

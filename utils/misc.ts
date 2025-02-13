@@ -1,4 +1,4 @@
-import { basename, dirname, extname, join } from "@std/path";
+import { dirname, extname, join } from "@std/path";
 import { Metadata } from "../schemas/metadata.ts";
 import { Tags, TagsSchema } from "../schemas/tags.ts";
 import { ensureDirSync, walkSync } from "@std/fs";
@@ -38,6 +38,9 @@ function findAudioFiles(fromPath: string): Metadata[] {
 
     if (AUDIO_EXTENSIONS.has(extension)) {
       const path = join(fromPath, f.name);
+
+      // TODO validate path
+
       const tags = getAudioFileTags(path);
 
       if (tags) {
@@ -75,13 +78,29 @@ function findMissingTags(
  * @description Creates a structured file path based on metadata information.
  *
  * @param {string} toDir - The base directory where files will be stored
- * @param {Metadata} metadata - Object containing file metadata including path and tags
- * @returns {string} A formatted path combining directory, BPM, artist, and filename
+ * @param {string} BPM - The beats per minute value used in the directory structure
+ * @param {string} artist - The artist name used in the directory structure
+ * @param {string} path - Original file path used to determine format-specific directories
+ * @param {string} fileName - The filename with extension
+ *
+ * @returns {string} A formatted path combining directory, BPM, artist, and filename.
+ * For MP3 files, includes an 'mp3' subdirectory level.
  */
-function createToPath(toDir: string, metadata: Metadata): string {
-  const mp3Dir = extname(metadata.path).toLowerCase() === ".mp3" ? "/mp3" : "";
-  const filename = basename(metadata.path);
-  return `${toDir}/${metadata.tags.BPM}/${metadata.tags.artist}${mp3Dir}/${filename}`;
+function createToPath(
+  toDir: string,
+  BPM: string,
+  artist: string,
+  path: string,
+  fileName: string,
+): string {
+  const mp3Dir = extname(path).toLowerCase() === ".mp3" ? "mp3" : "";
+  return join(
+    toDir,
+    BPM,
+    artist,
+    mp3Dir,
+    fileName,
+  );
 }
 
 // TODO docs + tests
@@ -90,14 +109,23 @@ function copyAudioFiles(
   toDir: string,
 ): void {
   for (const m of metadata) {
-    if (!m.tags.BPM || !m.tags.artist) continue;
+    const { path, name, tags: { BPM, artist } } = m;
 
-    const toPath = createToPath(toDir, m);
+    if (BPM && artist) {
+      const toPath = createToPath(toDir, BPM, artist, path, name);
 
-    const dir = dirname(toPath);
-    ensureDirSync(dir);
+      const dir = dirname(toPath);
+      ensureDirSync(dir);
 
-    Deno.copyFileSync(m.path, toPath);
+      Deno.copyFileSync(path, toPath);
+    } else {
+      const missingTagPath = join(toDir, "00-missing-tags", name);
+
+      const dir = dirname(missingTagPath);
+      ensureDirSync(dir);
+
+      Deno.copyFileSync(path, missingTagPath);
+    }
   }
 }
 
