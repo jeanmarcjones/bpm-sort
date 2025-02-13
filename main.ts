@@ -57,11 +57,8 @@ function main(inputArgs: string[]): void {
     const metadata = findAudioFiles(from);
     const { missingBPM, missingArtist } = findMissingTags(metadata);
 
-    let foldersCreated = 0;
-
     if (!dryRun) {
       copyAudioFiles(metadata, to);
-      foldersCreated = countDirectories(to);
     }
 
     // TODO handle all files have missing BPM or arist tags
@@ -74,6 +71,7 @@ function main(inputArgs: string[]): void {
 
     const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
     const totalCopiedFiles = copiedFiles.length;
+    const foldersCreated = dryRun ? 0 : countDirectories(to);
 
     dryRun
       ? printDryRun(copiedFiles, to)
