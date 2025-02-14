@@ -8,7 +8,7 @@ function formatArtist(value?: string): string | undefined {
       return value?.toLowerCase().replace(
         /[^a-zA-Z\s]/g,
         "",
-      );
+      ).replace("  ", " x ");
     }
     default: {
       return undefined;
