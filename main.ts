@@ -2,7 +2,7 @@ import { emptyDir } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
 import {
   copyAudioFiles,
-  // countAudioFiles,
+  countAudioFiles,
   countDirectories,
   findAudioFiles,
   findMissingTags,
@@ -15,13 +15,14 @@ import {
 } from "./utils/logging.ts";
 import { validateToAndFromDirectories } from "./utils/errors.ts";
 import { red } from "@std/fmt/colors";
-// import { Spinner } from "@std/cli/unstable-spinner";
+import { Spinner } from "@std/cli/unstable-spinner";
 
 // TODO add --help argument
 // TODO allow multiple from folders
 // TODO toggle mp3 behavior
 // TODO toggle collect missing behavior
 // TODO change colab character
+// TODO switch to progress bars
 
 function parseArguments(args: string[]): Args {
   const booleanArgs = [
@@ -55,6 +56,12 @@ async function main(inputArgs: string[]): Promise<void> {
     try {
       const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
+      const total = await countAudioFiles(from);
+      console.log("Found", total, "audio files.");
+
+      const spinner = new Spinner({ message: "Copying...", color: "yellow" });
+      spinner.start();
+
       // TODO handle folders already existing
       await emptyDir(to);
 
@@ -65,7 +72,9 @@ async function main(inputArgs: string[]): Promise<void> {
         await copyAudioFiles(metadata, to);
       }
 
-      // TODO handle all files have missing BPM or arist tags
+      spinner.stop();
+
+      // TODO handle all files have missing BPM or artist tags
 
       printMissingBPM(missingBPM);
       printMissingArtist(missingArtist);
@@ -74,6 +83,7 @@ async function main(inputArgs: string[]): Promise<void> {
       const totalCopiedFiles = copiedFiles.length;
       const foldersCreated = dryRun ? 0 : await countDirectories(to);
 
+      // TODO fix incorrect totals
       dryRun
         ? printDryRun(copiedFiles, to)
         : printComplete(totalCopiedFiles, foldersCreated);
@@ -86,25 +96,5 @@ async function main(inputArgs: string[]): Promise<void> {
     }
   }
 }
-
-// async function main(inputArgs: string[]): Promise<void> {
-//   const { from, to } = parseArguments(inputArgs);
-//
-//   const total = await countAudioFiles(from);
-//   console.log("Found", total, "audio files.");
-//
-//   const spinner = new Spinner({ message: "Copying...", color: "yellow" });
-//   spinner.start();
-//
-//
-//   const metadata = await findAudioFiles(from);
-//
-//   await copyAudioFiles(metadata, to);
-//
-//   setTimeout(() => {
-//     spinner.stop();
-//     console.log("Done");
-//   }, 100);
-// }
 
 main(Deno.args);

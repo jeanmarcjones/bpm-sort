@@ -31,7 +31,7 @@ function printDryRun(metadata: Metadata[], toPath: string): void {
 
 function printMissingBPM(missingBPM: string[]): void {
   if (missingBPM.length > 0) {
-    console.log(brightYellow("Files missing a BPM tag:"));
+    console.log(brightYellow("\nFiles missing a BPM tag:"));
     for (const path of missingBPM) {
       console.log(path);
     }

@@ -152,6 +152,7 @@ async function countAudioFiles(toPath: string): Promise<number> {
     const extension = extname(entry.name);
 
     if (AUDIO_EXTENSIONS.has(extension)) {
+      // console.log(basename(entry.path), i++)
       dirCount += 1;
     }
   }
