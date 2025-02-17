@@ -1,7 +1,8 @@
-import { emptyDirSync } from "@std/fs";
+import { emptyDir } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
 import {
   copyAudioFiles,
+  // countAudioFiles,
   countDirectories,
   findAudioFiles,
   findMissingTags,
@@ -14,6 +15,7 @@ import {
 } from "./utils/logging.ts";
 import { validateToAndFromDirectories } from "./utils/errors.ts";
 import { red } from "@std/fmt/colors";
+// import { Spinner } from "@std/cli/unstable-spinner";
 
 // TODO add --help argument
 // TODO allow multiple from folders
@@ -48,19 +50,19 @@ function parseArguments(args: string[]): Args {
   return parsedArgs;
 }
 
-function main(inputArgs: string[]): void {
+async function main(inputArgs: string[]): Promise<void> {
   if (import.meta.main) {
     try {
       const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
       // TODO handle folders already existing
-      emptyDirSync(to);
+      await emptyDir(to);
 
-      const metadata = findAudioFiles(from);
+      const metadata = await findAudioFiles(from);
       const { missingBPM, missingArtist } = findMissingTags(metadata);
 
       if (!dryRun) {
-        copyAudioFiles(metadata, to);
+        await copyAudioFiles(metadata, to);
       }
 
       // TODO handle all files have missing BPM or arist tags
@@ -70,7 +72,7 @@ function main(inputArgs: string[]): void {
 
       const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
       const totalCopiedFiles = copiedFiles.length;
-      const foldersCreated = dryRun ? 0 : countDirectories(to);
+      const foldersCreated = dryRun ? 0 : await countDirectories(to);
 
       dryRun
         ? printDryRun(copiedFiles, to)
@@ -84,5 +86,25 @@ function main(inputArgs: string[]): void {
     }
   }
 }
+
+// async function main(inputArgs: string[]): Promise<void> {
+//   const { from, to } = parseArguments(inputArgs);
+//
+//   const total = await countAudioFiles(from);
+//   console.log("Found", total, "audio files.");
+//
+//   const spinner = new Spinner({ message: "Copying...", color: "yellow" });
+//   spinner.start();
+//
+//
+//   const metadata = await findAudioFiles(from);
+//
+//   await copyAudioFiles(metadata, to);
+//
+//   setTimeout(() => {
+//     spinner.stop();
+//     console.log("Done");
+//   }, 100);
+// }
 
 main(Deno.args);

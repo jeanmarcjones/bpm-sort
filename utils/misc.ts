@@ -1,7 +1,7 @@
 import { dirname, extname, join } from "@std/path";
 import { Metadata } from "../schemas/metadata.ts";
 import { Tags, TagsSchema } from "../schemas/tags.ts";
-import { ensureDirSync, walkSync } from "@std/fs";
+import { ensureDir, walk } from "@std/fs";
 
 const AUDIO_EXTENSIONS = new Set([".flac", ".mp3"]);
 
@@ -28,12 +28,10 @@ function getAudioFileTags(fromPath: string): Tags | null {
 }
 
 // TODO docs and tests
-function findAudioFiles(fromPath: string): Metadata[] {
+async function findAudioFiles(fromPath: string): Promise<Metadata[]> {
   const audioFiles: Metadata[] = [];
 
-  for (
-    const f of Deno.readDirSync(fromPath)
-  ) {
+  for await (const f of Deno.readDir(fromPath)) {
     const extension = extname(f.name);
 
     if (AUDIO_EXTENSIONS.has(extension)) {
@@ -49,7 +47,7 @@ function findAudioFiles(fromPath: string): Metadata[] {
     } else if (f.isDirectory) {
       const recursivePath = join(fromPath, f.name);
 
-      audioFiles.push(...findAudioFiles(recursivePath));
+      audioFiles.push(...(await findAudioFiles(recursivePath)));
     }
   }
 
@@ -104,10 +102,10 @@ function createToPath(
 }
 
 // TODO docs + tests
-function copyAudioFiles(
+async function copyAudioFiles(
   metadata: Metadata[],
   toDir: string,
-): void {
+): Promise<void> {
   for (const m of metadata) {
     const { path, name, tags: { BPM, artist } } = m;
 
@@ -115,16 +113,16 @@ function copyAudioFiles(
       const toPath = createToPath(toDir, BPM, artist, path, name);
 
       const dir = dirname(toPath);
-      ensureDirSync(dir);
+      await ensureDir(dir);
 
-      Deno.copyFileSync(path, toPath);
+      await Deno.copyFile(path, toPath);
     } else {
       const missingTagPath = join(toDir, "00-missing-tags", name);
 
       const dir = dirname(missingTagPath);
-      ensureDirSync(dir);
+      await ensureDir(dir);
 
-      Deno.copyFileSync(path, missingTagPath);
+      await Deno.copyFile(path, missingTagPath);
     }
   }
 }
@@ -136,12 +134,26 @@ function copyAudioFiles(
  * @param {string} toPath - The path to start counting directories from
  * @returns {number} The total number of directories found
  */
-function countDirectories(toPath: string): number {
+async function countDirectories(toPath: string): Promise<number> {
   // walk includes the paths root directory
   let dirCount = -1;
 
-  for (const _entry of walkSync(toPath, { includeFiles: false })) {
+  for await (const _entry of walk(toPath, { includeFiles: false })) {
     dirCount += 1;
+  }
+
+  return dirCount;
+}
+
+async function countAudioFiles(toPath: string): Promise<number> {
+  let dirCount = 0;
+
+  for await (const entry of walk(toPath, { includeDirs: false })) {
+    const extension = extname(entry.name);
+
+    if (AUDIO_EXTENSIONS.has(extension)) {
+      dirCount += 1;
+    }
   }
 
   return dirCount;
@@ -149,6 +161,7 @@ function countDirectories(toPath: string): number {
 
 export {
   copyAudioFiles,
+  countAudioFiles,
   countDirectories,
   createToPath,
   findAudioFiles,
