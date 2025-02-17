@@ -1,4 +1,3 @@
-import { emptyDir } from "@std/fs";
 import { type Args, parseArgs } from "@std/cli/parse-args";
 import {
   copyAudioFiles,
@@ -23,6 +22,7 @@ import { Spinner } from "@std/cli/unstable-spinner";
 // TODO toggle collect missing behavior
 // TODO change colab character
 // TODO switch to progress bars
+// TODO target specific BPM ranges
 
 function parseArguments(args: string[]): Args {
   const booleanArgs = [
@@ -61,9 +61,6 @@ async function main(inputArgs: string[]): Promise<void> {
 
       const spinner = new Spinner({ message: "Copying...", color: "yellow" });
       spinner.start();
-
-      // TODO handle folders already existing
-      await emptyDir(to);
 
       const metadata = await findAudioFiles(from);
       const { missingBPM, missingArtist } = findMissingTags(metadata);

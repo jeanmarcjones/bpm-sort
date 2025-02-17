@@ -101,6 +101,17 @@ function createToPath(
   );
 }
 
+/**
+ * @description Rounds down a BPM value to the nearest ten.
+
+ * @param {string} BPM - The Beats Per Minute value to round down
+ * @returns {string} The rounded down BPM value
+ */
+function roundDownBPM(BPM: string): string {
+  const parsedBPM = Number(BPM);
+  return String(Math.floor(parsedBPM / 10) * 10);
+}
+
 // TODO docs + tests
 async function copyAudioFiles(
   metadata: Metadata[],
@@ -110,7 +121,7 @@ async function copyAudioFiles(
     const { path, name, tags: { BPM, artist } } = m;
 
     if (BPM && artist) {
-      const toPath = createToPath(toDir, BPM, artist, path, name);
+      const toPath = createToPath(toDir, roundDownBPM(BPM), artist, path, name);
 
       const dir = dirname(toPath);
       await ensureDir(dir);
@@ -152,7 +163,6 @@ async function countAudioFiles(toPath: string): Promise<number> {
     const extension = extname(entry.name);
 
     if (AUDIO_EXTENSIONS.has(extension)) {
-      // console.log(basename(entry.path), i++)
       dirCount += 1;
     }
   }
