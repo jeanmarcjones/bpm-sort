@@ -3,7 +3,7 @@ import { Metadata } from "../schemas/metadata.ts";
 import { Tags, TagsSchema } from "../schemas/tags.ts";
 import { ensureDir, walk } from "@std/fs";
 
-const AUDIO_EXTENSIONS = new Set([".flac", ".mp3"]);
+const AUDIO_EXTENSIONS = new Set([".flac", ".mp3", ".wav"]);
 
 // TODO docs and tests
 function getAudioFileTags(fromPath: string): Tags | null {

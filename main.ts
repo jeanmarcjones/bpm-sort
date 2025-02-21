@@ -22,7 +22,8 @@ import { Spinner } from "@std/cli/unstable-spinner";
 // TODO toggle collect missing behavior
 // TODO change colab character
 // TODO switch to progress bars
-// TODO target specific BPM ranges
+// TODO allow user to define BPM ranges
+// TODO improve handling of wav files
 
 function parseArguments(args: string[]): Args {
   const booleanArgs = [
