@@ -1,14 +1,14 @@
 import { type Args, parseArgs } from "@std/cli/parse-args";
 import {
   copyAudioFiles,
-  countAudioFiles,
-  countDirectories,
+  countFiles,
   findAudioFiles,
   findMissingTags,
 } from "./utils/misc.ts";
 import {
   printComplete,
   printDryRun,
+  printFileTotals,
   printMissingArtist,
   printMissingBPM,
 } from "./utils/logging.ts";
@@ -57,8 +57,8 @@ async function main(inputArgs: string[]): Promise<void> {
     try {
       const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
-      const total = await countAudioFiles(from);
-      console.log("Found", total, "audio files.");
+      const fromTotals = await countFiles(from);
+      printFileTotals(fromTotals);
 
       const spinner = new Spinner({ message: "Copying...", color: "yellow" });
       spinner.start();
@@ -70,6 +70,9 @@ async function main(inputArgs: string[]): Promise<void> {
         await copyAudioFiles(metadata, to);
       }
 
+      const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
+      const toTotals = await countFiles(to);
+
       spinner.stop();
 
       // TODO handle all files have missing BPM or artist tags
@@ -77,14 +80,7 @@ async function main(inputArgs: string[]): Promise<void> {
       printMissingBPM(missingBPM);
       printMissingArtist(missingArtist);
 
-      const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
-      const totalCopiedFiles = copiedFiles.length;
-      const foldersCreated = dryRun ? 0 : await countDirectories(to);
-
-      // TODO fix incorrect totals
-      dryRun
-        ? printDryRun(copiedFiles, to)
-        : printComplete(totalCopiedFiles, foldersCreated);
+      dryRun ? printDryRun(copiedFiles, to) : printComplete(toTotals);
     } catch (e: unknown) {
       if (e instanceof Error) {
         console.log(red(`[${e.name}]`), red(e.message));

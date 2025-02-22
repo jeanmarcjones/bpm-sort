@@ -17,6 +17,7 @@ function getAudioFileTags(fromPath: string): Tags | null {
   });
   const { stdout, success } = command.outputSync();
 
+  // TODO log stderr
   if (!success) return null;
 
   const metaData = JSON.parse(new TextDecoder().decode(stdout));
@@ -156,25 +157,51 @@ async function countDirectories(toPath: string): Promise<number> {
   return dirCount;
 }
 
-async function countAudioFiles(toPath: string): Promise<number> {
-  let dirCount = 0;
+interface Totals {
+  allCount: number;
+  audioCount: number;
+  dirsCount: number;
+}
 
-  for await (const entry of walk(toPath, { includeDirs: false })) {
+// TODO tests
+/**
+ * @description Counts total files, audio files, and directories in a given path.
+ *
+ * @param {string} toPath - The directory path to scan for files and directories
+ * @returns {Promise<Totals>} A promise resolving to an object containing counts of all files,
+ * audio files, and directories
+ */
+async function countFiles(
+  toPath: string,
+): Promise<Totals> {
+  let audioCount = 0;
+  let allCount = 0;
+  // walk includes the paths root directory
+  let dirsCount = -1;
+
+  for await (const entry of walk(toPath)) {
+    if (!entry.name.startsWith(".")) {
+      allCount += 1;
+    }
+
     const extension = extname(entry.name);
 
     if (AUDIO_EXTENSIONS.has(extension)) {
-      dirCount += 1;
+      audioCount += 1;
+    } else if (entry.isDirectory) {
+      dirsCount += 1;
     }
   }
 
-  return dirCount;
+  return { allCount, audioCount, dirsCount };
 }
 
 export {
   copyAudioFiles,
-  countAudioFiles,
   countDirectories,
+  countFiles,
   createToPath,
   findAudioFiles,
   findMissingTags,
+  type Totals,
 };
