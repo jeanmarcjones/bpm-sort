@@ -1,7 +1,7 @@
 import { dirname, extname, join } from "@std/path";
 import { Metadata } from "../schemas/metadata.ts";
 import { Tags, TagsSchema } from "../schemas/tags.ts";
-import { ensureDir, walk } from "@std/fs";
+import { copy, ensureDir, walk } from "@std/fs";
 
 const AUDIO_EXTENSIONS = new Set([".flac", ".mp3", ".wav"]);
 
@@ -127,14 +127,14 @@ async function copyAudioFiles(
       const dir = dirname(toPath);
       await ensureDir(dir);
 
-      await Deno.copyFile(path, toPath);
+      await copy(path, toPath, { preserveTimestamps: true });
     } else {
       const missingTagPath = join(toDir, "00-missing-tags", name);
 
       const dir = dirname(missingTagPath);
       await ensureDir(dir);
 
-      await Deno.copyFile(path, missingTagPath);
+      await copy(path, missingTagPath, { preserveTimestamps: true });
     }
   }
 }
