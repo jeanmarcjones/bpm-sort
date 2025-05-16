@@ -11,23 +11,24 @@ class ValidationError extends Error {
   }
 }
 
-function validateToAndFromDirectories(from?: string, to?: string): void {
-  if (typeof from !== "string" || typeof to !== "string") {
+function validateToAndFromDirectories(fromDirs: string[], to: unknown): void {
+  if (typeof to !== "string") {
     throw new ValidationError(
       "Missing required parameters: ",
-      !from && "from",
       !to && "to",
     );
   }
 
-  const invalidToPath = existsSync(to, { isFile: true });
-  const invalidFromPath = existsSync(from, { isFile: true });
+  const invalidSources = fromDirs.filter((dir) =>
+    !existsSync(dir, { isDirectory: true })
+  );
+  const invalidTo = !existsSync(to, { isDirectory: true });
 
-  if (invalidFromPath || invalidToPath) {
+  if (invalidSources.length > 0 || invalidTo) {
     throw new ValidationError(
       "Invalid directory paths: ",
-      invalidFromPath && "from",
-      invalidToPath && "to",
+      invalidSources.length > 0 && `source(s) - ${invalidSources.join(", ")}`,
+      invalidTo && "destination (to)",
     );
   }
 }

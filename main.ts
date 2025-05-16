@@ -25,18 +25,11 @@ import { Spinner } from "@std/cli/unstable-spinner";
 // TODO allow user to define BPM ranges
 // TODO improve handling of wav files
 
-function parseArguments(args: string[]): Args {
-  const booleanArgs = [
-    "dry-run",
-  ];
-
-  const stringArgs = [
-    "from",
-    "to",
-  ];
+function parseArguments(args: string[]): Args & { sources: string[] } {
+  const booleanArgs = ["dry-run"];
+  const stringArgs = ["to"];
 
   const alias = {
-    from: "f",
     to: "t",
     "dry-run": "d",
   };
@@ -47,35 +40,50 @@ function parseArguments(args: string[]): Args {
     string: stringArgs,
   });
 
-  validateToAndFromDirectories(parsedArgs.from, parsedArgs.to);
+  const sources = parsedArgs._.map(String);
 
-  return parsedArgs;
+  if (sources.length === 0) {
+    throw new Error("Please provide at least one source directory.");
+  }
+
+  validateToAndFromDirectories(sources, parsedArgs.to);
+
+  return { ...parsedArgs, sources };
 }
 
 async function main(inputArgs: string[]): Promise<void> {
   if (import.meta.main) {
     try {
-      const { from, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
+      const { sources, to, ["dry-run"]: dryRun } = parseArguments(inputArgs);
 
-      const fromTotals = await countFiles(from);
-      printFileTotals(fromTotals);
-
-      const spinner = new Spinner({ message: "Copying...", color: "yellow" });
+      const spinner = new Spinner({
+        message: "Processing...",
+        color: "yellow",
+      });
       spinner.start();
 
-      const metadata = await findAudioFiles(from);
-      const { missingBPM, missingArtist } = findMissingTags(metadata);
+      const combinedMetadata = [];
 
-      if (!dryRun) {
-        await copyAudioFiles(metadata, to);
+      for (const source of sources) {
+        const fromTotals = await countFiles(source);
+        printFileTotals(fromTotals);
+
+        const metadata = await findAudioFiles(source);
+        combinedMetadata.push(...metadata);
       }
 
-      const copiedFiles = metadata.filter((m) => m.tags.BPM && m.tags.artist);
+      const { missingBPM, missingArtist } = findMissingTags(combinedMetadata);
+
+      if (!dryRun) {
+        await copyAudioFiles(combinedMetadata, to);
+      }
+
+      const copiedFiles = combinedMetadata.filter((m) =>
+        m.tags.BPM && m.tags.artist
+      );
       const toTotals = await countFiles(to);
 
       spinner.stop();
-
-      // TODO handle all files have missing BPM or artist tags
 
       printMissingBPM(missingBPM);
       printMissingArtist(missingArtist);
